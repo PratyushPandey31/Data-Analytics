@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Columns, Hash, FileText, BarChart3, ShieldAlert, Sparkles, TrendingUp } from 'lucide-react';
-import { Scatter } from 'react-chartjs-2';
+import { Columns, Hash, FileText, BarChart3, Sparkles, TrendingUp, HelpCircle } from 'lucide-react';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function Dashboard({ activeDataset, token }) {
   const [loading, setLoading] = useState(false);
   const [corrData, setCorrData] = useState(null);
+  const [distData, setDistData] = useState(null);
+  const [distLoading, setDistLoading] = useState(false);
   const [error, setError] = useState('');
+  
   const [summaryData, setSummaryData] = useState({
     rows: 0,
     cols: 0,
@@ -17,6 +30,7 @@ export default function Dashboard({ activeDataset, token }) {
     if (activeDataset) {
       calculateSummary();
       fetchCorrelation();
+      fetchDistribution();
     }
   }, [activeDataset]);
 
@@ -68,21 +82,65 @@ export default function Dashboard({ activeDataset, token }) {
     }
   };
 
-  if (!activeDataset) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px 0', color: 'rgba(255,255,255,0.4)' }}>
-        Please select or upload a dataset first.
-      </div>
-    );
-  }
+  const fetchDistribution = async () => {
+    setDistLoading(true);
+    setDistData(null);
+    
+    // Find first categorical column
+    const schema = activeDataset.schema;
+    const catCol = Object.keys(schema).find(col => schema[col].type === 'TEXT');
+    if (!catCol) {
+      setDistLoading(false);
+      return;
+    }
 
-  // Helper to determine background color for correlation cells
+    const sanitizedCol = schema[catCol].sanitized;
+    const query = `SELECT "${sanitizedCol}" as label, COUNT(*) as cnt FROM data WHERE "${sanitizedCol}" IS NOT NULL GROUP BY "${sanitizedCol}" ORDER BY cnt DESC LIMIT 6`;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/query/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          dataset_id: activeDataset.id,
+          query: query
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.rows && data.rows.length > 0) {
+        const labels = data.rows.map(r => r.label === null ? 'NULL' : String(r.label));
+        const values = data.rows.map(r => parseInt(r.cnt, 10));
+
+        setDistData({
+          columnName: catCol,
+          labels,
+          datasets: [{
+            label: 'Record Frequency',
+            data: values,
+            backgroundColor: 'rgba(0, 242, 254, 0.45)',
+            borderColor: 'rgb(0, 242, 254)',
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        });
+      }
+    } catch (err) {
+      console.error('Fetch distribution error:', err);
+    } finally {
+      setDistLoading(false);
+    }
+  };
+
   const getCellColor = (val) => {
-    if (val === 1) return 'rgba(0, 242, 254, 0.45)'; // Self correlation
+    if (val === 1) return 'rgba(0, 242, 254, 0.45)';
     if (val > 0) {
-      return `rgba(0, 242, 254, ${val * 0.4})`; // Cyan positive
+      return `rgba(0, 242, 254, ${val * 0.4})`;
     } else {
-      return `rgba(255, 0, 127, ${Math.abs(val) * 0.45})`; // Magenta negative
+      return `rgba(255, 0, 127, ${Math.abs(val) * 0.45})`;
     }
   };
 
@@ -92,6 +150,18 @@ export default function Dashboard({ activeDataset, token }) {
     const sizes = ['Bytes', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const distChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } } }
+    }
   };
 
   return (
@@ -112,287 +182,303 @@ export default function Dashboard({ activeDataset, token }) {
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '20px'
       }}>
-        {/* Total Rows */}
-        <div className="glass-panel glass-panel-hover" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="glass-panel glass-panel-hover" style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            background: 'rgba(0, 242, 254, 0.08)',
+            width: '48px',
+            height: '48px',
+            borderRadius: '14px',
+            background: 'rgba(0, 242, 254, 0.06)',
+            border: '1px solid rgba(0, 242, 254, 0.15)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 10px rgba(0, 242, 254, 0.1)'
+            boxShadow: '0 0 15px rgba(0, 242, 254, 0.08)'
           }}>
             <Hash className="text-glow-cyan" size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Ingested Rows</span>
-            <h3 style={{ fontSize: '20px', marginTop: '2px', fontWeight: '800' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.05em' }}>Ingested Rows</span>
+            <h3 style={{ fontSize: '22px', marginTop: '2px', fontWeight: '800' }}>
               {summaryData.rows.toLocaleString()}
             </h3>
           </div>
         </div>
 
-        {/* Total Columns */}
-        <div className="glass-panel glass-panel-hover" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="glass-panel glass-panel-hover" style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            background: 'rgba(255, 0, 127, 0.08)',
+            width: '48px',
+            height: '48px',
+            borderRadius: '14px',
+            background: 'rgba(255, 0, 127, 0.06)',
+            border: '1px solid rgba(255, 0, 127, 0.15)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 10px rgba(255, 0, 127, 0.1)'
+            boxShadow: '0 0 15px rgba(255, 0, 127, 0.08)'
           }}>
             <Columns className="text-glow-magenta" size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Headers Count</span>
-            <h3 style={{ fontSize: '20px', marginTop: '2px', fontWeight: '800' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.05em' }}>Headers Count</span>
+            <h3 style={{ fontSize: '22px', marginTop: '2px', fontWeight: '800' }}>
               {summaryData.cols}
             </h3>
           </div>
         </div>
 
-        {/* Numerical Columns */}
-        <div className="glass-panel glass-panel-hover" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="glass-panel glass-panel-hover" style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            background: 'rgba(0, 245, 160, 0.08)',
+            width: '48px',
+            height: '48px',
+            borderRadius: '14px',
+            background: 'rgba(0, 245, 160, 0.06)',
+            border: '1px solid rgba(0, 245, 160, 0.15)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 10px rgba(0, 245, 160, 0.1)'
+            boxShadow: '0 0 15px rgba(0, 245, 160, 0.08)'
           }}>
             <TrendingUp className="text-glow-emerald" size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Numerical fields</span>
-            <h3 style={{ fontSize: '20px', marginTop: '2px', fontWeight: '800', color: 'var(--neon-emerald)' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.05em' }}>Numerical Fields</span>
+            <h3 style={{ fontSize: '22px', marginTop: '2px', fontWeight: '800', color: 'var(--neon-emerald)' }}>
               {summaryData.numeric}
             </h3>
           </div>
         </div>
 
-        {/* File Size */}
-        <div className="glass-panel glass-panel-hover" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="glass-panel glass-panel-hover" style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            background: 'rgba(255, 215, 0, 0.08)',
+            width: '48px',
+            height: '48px',
+            borderRadius: '14px',
+            background: 'rgba(255, 215, 0, 0.06)',
+            border: '1px solid rgba(255, 215, 0, 0.15)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 10px rgba(255, 215, 0, 0.1)'
+            boxShadow: '0 0 15px rgba(255, 215, 0, 0.08)'
           }}>
             <FileText className="text-glow-gold" size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Physical Size</span>
-            <h3 style={{ fontSize: '20px', marginTop: '2px', fontWeight: '800', color: 'var(--neon-gold)' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.05em' }}>Physical Size</span>
+            <h3 style={{ fontSize: '22px', marginTop: '2px', fontWeight: '800', color: 'var(--neon-gold)' }}>
               {formatBytes(activeDataset.file_size)}
             </h3>
           </div>
         </div>
       </div>
 
-      {/* Main Content Dashboard Grid */}
+      {/* Grid structure for Dashboard visual panels */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
         gap: '20px',
-        alignItems: 'start'
+        alignItems: 'stretch'
       }}>
-        {/* Correlation Heatmap */}
-        <div className="glass-panel" style={{ padding: '25px', background: 'rgba(10, 15, 36, 0.25)', minHeight: '380px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Panel 1: Correlation Heatmap */}
+        <div className="glass-panel" style={{ padding: '25px', background: 'rgba(10, 15, 36, 0.25)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <h3 style={{ fontSize: '17px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
               <Sparkles size={16} className="text-glow-cyan" />
               <span>Pearson Correlation Heatmap</span>
             </h3>
 
-            {corrData && (
-              <span style={{ fontSize: '10px', color: 'var(--neon-cyan)', background: 'rgba(0, 242, 254, 0.05)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0, 242, 254, 0.15)' }}>
-                Matrix Fit ok
-              </span>
-            )}
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '240px' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: '3px solid rgba(0,242,254,0.1)',
+                  borderTopColor: 'var(--neon-cyan)',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '10px'
+                }}></div>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px' }}>Evaluating covariance matrix...</p>
+              </div>
+            ) : error ? (
+              <div style={{ color: 'var(--neon-magenta)', fontSize: '13px', padding: '20px', textAlign: 'center' }}>
+                {error}
+              </div>
+            ) : corrData ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ borderCollapse: 'collapse', margin: '0 auto', fontSize: '11px' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ padding: '6px' }}></th>
+                      {corrData.columns.map((c) => (
+                        <th
+                          key={c}
+                          style={{
+                            padding: '6px',
+                            color: 'rgba(255,255,255,0.5)',
+                            transform: 'rotate(-25deg)',
+                            whiteSpace: 'nowrap',
+                            textAlign: 'left',
+                            maxWidth: '70px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
+                          {c}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {corrData.columns.map((colNameX, idxX) => (
+                      <tr key={colNameX}>
+                        <td style={{
+                          padding: '6px 8px',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontWeight: '600',
+                          textAlign: 'right',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '85px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {colNameX}
+                        </td>
+                        {corrData.columns.map((colNameY, idxY) => {
+                          const val = corrData.matrix[idxX][idxY];
+                          return (
+                            <td
+                              key={colNameY}
+                              style={{
+                                padding: '6px',
+                                textAlign: 'center',
+                                fontFamily: 'monospace',
+                                fontWeight: '700',
+                                background: getCellColor(val),
+                                color: Math.abs(val) > 0.4 ? '#fff' : 'rgba(255,255,255,0.7)',
+                                border: '1px solid #070913',
+                                borderRadius: '4px',
+                                width: '42px',
+                                height: '42px',
+                                fontSize: '11px'
+                              }}
+                              title={`Correlation [${colNameX}] & [${colNameY}]: ${val}`}
+                            >
+                              {val.toFixed(2)}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </div>
 
-          {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '240px' }}>
+          {/* Heatmap Legend */}
+          {corrData && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '20px',
+              marginTop: '20px',
+              fontSize: '10px',
+              color: 'rgba(255,255,255,0.45)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '10px', height: '10px', background: 'rgba(0, 242, 254, 0.45)', borderRadius: '2px' }}></div>
+                <span>Positive Correlation</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '10px', height: '10px', background: 'rgba(255, 0, 127, 0.45)', borderRadius: '2px' }}></div>
+                <span>Negative Correlation</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Panel 2: Distribution Bar Chart */}
+        <div className="glass-panel" style={{ padding: '25px', background: 'rgba(10, 15, 36, 0.25)', display: 'flex', flexDirection: 'column', minHeight: '380px' }}>
+          <h3 style={{ fontSize: '17px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <BarChart3 size={16} className="text-glow-cyan" />
+            <span>Value Frequency: {distData ? distData.columnName : 'Dimension'}</span>
+          </h3>
+
+          {distLoading ? (
+            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{
-                width: '30px',
-                height: '30px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
                 border: '3px solid rgba(0,242,254,0.1)',
                 borderTopColor: 'var(--neon-cyan)',
                 animation: 'spin 1s linear infinite',
                 marginBottom: '10px'
               }}></div>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Evaluating covariance matrix...</p>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px' }}>Counting record weights...</p>
             </div>
-          ) : error ? (
-            <div style={{ color: 'var(--neon-magenta)', fontSize: '13px', padding: '20px', textAlign: 'center' }}>
-              {error}
+          ) : distData ? (
+            <div style={{ position: 'relative', flexGrow: 1, height: '90%' }}>
+              <Bar data={distData} options={distChartOptions} />
             </div>
-          ) : corrData ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ borderCollapse: 'collapse', margin: '0 auto', fontSize: '11px' }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: '8px' }}></th>
-                    {corrData.columns.map((c) => (
-                      <th
-                        key={c}
-                        style={{
-                          padding: '8px',
-                          color: 'rgba(255,255,255,0.5)',
-                          transform: 'rotate(-25deg)',
-                          whiteSpace: 'nowrap',
-                          fontFamily: 'var(--font-sans)',
-                          textAlign: 'left',
-                          maxWidth: '75px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {c}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {corrData.columns.map((colNameX, idxX) => (
-                    <tr key={colNameX}>
-                      <td style={{
-                        padding: '8px',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontWeight: '600',
-                        textAlign: 'right',
-                        whiteSpace: 'nowrap',
-                        fontFamily: 'var(--font-sans)',
-                        maxWidth: '90px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {colNameX}
-                      </td>
-                      {corrData.columns.map((colNameY, idxY) => {
-                        const val = corrData.matrix[idxX][idxY];
-                        return (
-                          <td
-                            key={colNameY}
-                            style={{
-                              padding: '8px',
-                              textAlign: 'center',
-                              fontFamily: 'monospace',
-                              fontWeight: '700',
-                              background: getCellColor(val),
-                              color: Math.abs(val) > 0.4 ? '#fff' : 'rgba(255,255,255,0.7)',
-                              border: '1.5px solid #070913',
-                              borderRadius: '4px',
-                              width: '46px',
-                              height: '46px',
-                              fontSize: '11px'
-                            }}
-                            title={`Correlation [${colNameX}] & [${colNameY}]: ${val}`}
-                          >
-                            {val.toFixed(2)}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Legends explanation */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '20px',
-                marginTop: '25px',
-                fontSize: '10px',
-                color: 'rgba(255,255,255,0.45)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '10px', height: '10px', background: 'rgba(0, 242, 254, 0.4)', borderRadius: '2px' }}></div>
-                  <span>Positive Correlation (+1.0)</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '10px', height: '10px', background: 'rgba(255, 0, 127, 0.4)', borderRadius: '2px' }}></div>
-                  <span>Negative Correlation (-1.0)</span>
-                </div>
-              </div>
+          ) : (
+            <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', fontStyle: 'italic', fontSize: '13px' }}>
+              No categorical columns found to calculate distributions.
             </div>
-          ) : null}
+          )}
         </div>
+      </div>
 
-        {/* ML Guidance summary card */}
-        <div className="glass-panel" style={{
-          padding: '25px',
-          background: 'linear-gradient(135deg, rgba(13,20,48,0.4) 0%, rgba(20,10,36,0.4) 100%)',
-          minHeight: '380px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
-              <BarChart3 size={16} className="text-glow-magenta" />
-              <span>Automated Data Insights</span>
-            </h3>
+      {/* Panel 3: Automated Data Insights */}
+      <div className="glass-panel" style={{
+        padding: '25px',
+        background: 'linear-gradient(135deg, rgba(13,20,48,0.35) 0%, rgba(20,10,36,0.35) 100%)',
+        borderLeft: '4px solid var(--neon-cyan)'
+      }}>
+        <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+          <Sparkles size={16} className="text-glow-magenta" />
+          <span>Automated Data Insights</span>
+        </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.6' }}>
-              <p>
-                Nova AI has audited your dataset schema.
-                The table contains <strong>{summaryData.numeric}</strong> numerical variables suitable for vector math, and <strong>{summaryData.categorical}</strong> categorical indices.
-              </p>
-              
-              <div className="glass-panel" style={{
-                padding: '12px 15px',
-                background: 'rgba(255,255,255,0.01)',
-                borderRadius: '8px',
-                borderLeft: '3px solid var(--neon-gold)'
-              }}>
-                <h4 style={{ fontSize: '12px', color: 'var(--neon-gold)', fontWeight: '700', marginBottom: '4px' }}>
-                  Recommendation 1: Linear Regression
-                </h4>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                  Use <strong>ML Sandbox</strong> to fit a curve between numeric correlations, allowing real-time predictions.
-                </p>
-              </div>
-
-              <div className="glass-panel" style={{
-                padding: '12px 15px',
-                background: 'rgba(255,255,255,0.01)',
-                borderRadius: '8px',
-                borderLeft: '3px solid var(--neon-cyan)'
-              }}>
-                <h4 style={{ fontSize: '12px', color: 'var(--neon-cyan)', fontWeight: '700', marginBottom: '4px' }}>
-                  Recommendation 2: K-Means Clustering
-                </h4>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                  Plot spatial vectors on scatter grid coordinates and group centroids to discover cluster centers.
-                </p>
-              </div>
-            </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+          <div style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <p>
+              Nova AI has audited your database schema.
+              The table contains <strong>{summaryData.numeric}</strong> numerical variables suitable for vector math, and <strong>{summaryData.categorical}</strong> categorical indices.
+            </p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
+              Ingested dataset: <code>{activeDataset.table_name}</code>
+            </p>
           </div>
 
-          <div style={{
-            fontSize: '11px',
-            color: 'rgba(255,255,255,0.3)',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
-            paddingTop: '15px',
-            marginTop: '15px',
-            textAlign: 'center'
-          }}>
-            Powered by SQLite Relational Query Compiler
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="glass-panel" style={{
+              padding: '12px 15px',
+              background: 'rgba(255,255,255,0.01)',
+              borderRadius: '10px',
+              borderLeft: '3px solid var(--neon-gold)'
+            }}>
+              <h4 style={{ fontSize: '12px', color: 'var(--neon-gold)', fontWeight: '700', marginBottom: '3px' }}>
+                Recommendation 1: Linear Regression
+              </h4>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                Use **ML Sandbox** to fit a curve between numeric correlations, allowing real-time predictions.
+              </p>
+            </div>
+
+            <div className="glass-panel" style={{
+              padding: '12px 15px',
+              background: 'rgba(255,255,255,0.01)',
+              borderRadius: '10px',
+              borderLeft: '3px solid var(--neon-cyan)'
+            }}>
+              <h4 style={{ fontSize: '12px', color: 'var(--neon-cyan)', fontWeight: '700', marginBottom: '3px' }}>
+                Recommendation 2: K-Means Clustering
+              </h4>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                Plot spatial vectors on scatter grid coordinates and group centroids to discover cluster centers.
+              </p>
+            </div>
           </div>
         </div>
       </div>
