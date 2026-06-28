@@ -118,4 +118,5 @@ LIMIT 10;
 
 ---
 
-*Engineered with 💜 by Pratyush Pandey*
+**Author & Architect:** Pratyush Pandey  
+*Enterprise Data Analytics & Intelligence Systems*
