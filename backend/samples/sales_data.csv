@@ -1,0 +1,201 @@
+Date,Segment,Region,Product,Sales,Quantity,Profit,Discount
+2025-01-01,Corporate,North,Mechanical Keyboard,389.97,3,155.99,0
+2025-01-02,Consumer,West,4K Monitor,1049.97,3,419.99,0
+2025-01-03,Corporate,North,Wireless Earbuds,89.99,1,36,0
+2025-01-04,Corporate,East,4K Monitor,573.98,2,153.99,0.18
+2025-01-05,Home Office,West,Wireless Earbuds,178.18,2,70.19,0.01
+2025-01-06,Corporate,East,Mechanical Keyboard,389.97,3,155.99,0
+2025-01-07,Corporate,South,Mechanical Keyboard,649.95,5,259.98,0
+2025-01-08,Home Office,West,Wireless Earbuds,156.58,2,48.59,0.13
+2025-01-09,Corporate,West,4K Monitor,1049.97,3,419.99,0
+2025-01-10,Corporate,South,4K Monitor,699.98,2,279.99,0
+2025-01-11,Consumer,South,4K Monitor,1749.95,5,699.98,0
+2025-01-12,Corporate,East,Wireless Earbuds,179.98,2,71.99,0
+2025-01-13,Home Office,East,4K Monitor,1399.96,4,559.98,0
+2025-01-14,Home Office,East,4K Monitor,699.98,2,279.99,0
+2025-01-15,Consumer,West,4K Monitor,1217.97,4,377.99,0.13
+2025-01-16,Home Office,West,Ergonomic Mouse,119.98,2,47.99,0
+2025-01-17,Corporate,North,Smart Watch,199.99,1,80,0
+2025-01-18,Corporate,West,Smart Watch,799.96,4,319.98,0
+2025-01-19,Corporate,East,Ergonomic Mouse,278.95,5,98.98,0.07
+2025-01-20,Consumer,West,Wireless Earbuds,179.98,2,71.99,0
+2025-01-21,Consumer,East,Mechanical Keyboard,389.97,3,155.99,0
+2025-01-22,Home Office,South,Mechanical Keyboard,231.38,2,75.39,0.11
+2025-01-23,Home Office,South,Smart Watch,399.98,2,159.99,0
+2025-01-24,Home Office,East,Mechanical Keyboard,259.98,2,103.99,0
+2025-01-25,Home Office,North,Wireless Earbuds,179.98,2,71.99,0
+2025-01-26,Corporate,West,Ergonomic Mouse,248.96,5,68.99,0.17
+2025-01-27,Consumer,East,Smart Watch,799.96,4,319.98,0
+2025-01-28,Corporate,South,Mechanical Keyboard,571.96,5,181.99,0.12
+2025-01-29,Home Office,South,Ergonomic Mouse,299.95,5,119.98,0
+2025-01-30,Home Office,South,Smart Watch,775.96,4,295.98,0.03
+2025-01-31,Consumer,North,Mechanical Keyboard,241.78,2,85.79,0.07
+2025-02-01,Corporate,West,Wireless Earbuds,449.95,5,179.98,0
+2025-02-02,Corporate,South,Wireless Earbuds,86.39,1,32.4,0.04
+2025-02-03,Corporate,West,Ergonomic Mouse,179.97,3,71.99,0
+2025-02-04,Corporate,South,Mechanical Keyboard,354.87,3,120.89,0.09
+2025-02-05,Corporate,East,4K Monitor,892.47,3,262.49,0.15
+2025-02-06,Corporate,South,Wireless Earbuds,179.98,2,71.99,0
+2025-02-07,Home Office,West,Ergonomic Mouse,299.95,5,119.98,0
+2025-02-08,Home Office,West,4K Monitor,1049.97,3,419.99,0
+2025-02-09,Corporate,East,Mechanical Keyboard,116.99,1,39,0.1
+2025-02-10,Home Office,East,Smart Watch,727.96,4,247.98,0.09
+2025-02-11,Home Office,East,Wireless Earbuds,359.96,4,143.98,0
+2025-02-12,Consumer,South,Mechanical Keyboard,649.95,5,259.98,0
+2025-02-13,Consumer,East,Smart Watch,999.95,5,399.98,0
+2025-02-14,Home Office,West,Mechanical Keyboard,649.95,5,259.98,0
+2025-02-15,Consumer,West,Mechanical Keyboard,220.98,2,64.99,0.15
+2025-02-16,Home Office,North,Smart Watch,391.98,2,151.99,0.02
+2025-02-17,Consumer,East,Ergonomic Mouse,179.97,3,71.99,0
+2025-02-18,Corporate,South,Mechanical Keyboard,519.96,4,207.98,0
+2025-02-19,Home Office,North,Wireless Earbuds,449.95,5,179.98,0
+2025-02-20,Home Office,North,4K Monitor,1399.96,4,559.98,0
+2025-02-21,Corporate,North,Ergonomic Mouse,266.96,5,86.99,0.11
+2025-02-22,Consumer,North,Ergonomic Mouse,239.96,4,95.98,0
+2025-02-23,Home Office,East,Wireless Earbuds,154.78,2,46.79,0.14
+2025-02-24,Consumer,North,4K Monitor,349.99,1,140,0
+2025-02-25,Corporate,North,Smart Watch,539.97,3,179.99,0.1
+2025-02-26,Home Office,North,4K Monitor,1049.97,3,419.99,0
+2025-02-27,Consumer,South,4K Monitor,349.99,1,140,0
+2025-02-28,Corporate,South,Mechanical Keyboard,259.98,2,103.99,0
+2025-03-01,Consumer,North,Wireless Earbuds,359.96,4,143.98,0
+2025-03-02,Consumer,East,4K Monitor,1749.95,5,699.98,0
+2025-03-03,Corporate,West,Ergonomic Mouse,53.99,1,18,0.1
+2025-03-04,Consumer,North,Mechanical Keyboard,129.99,1,52,0
+2025-03-05,Corporate,West,Smart Watch,799.96,4,319.98,0
+2025-03-06,Home Office,North,Wireless Earbuds,359.96,4,143.98,0
+2025-03-07,Home Office,North,Wireless Earbuds,269.97,3,107.99,0
+2025-03-08,Consumer,East,Wireless Earbuds,89.99,1,36,0
+2025-03-09,Corporate,West,Wireless Earbuds,269.97,3,107.99,0
+2025-03-10,Home Office,West,Ergonomic Mouse,165.57,3,57.59,0.08
+2025-03-11,Corporate,West,4K Monitor,349.99,1,140,0
+2025-03-12,Consumer,South,Smart Watch,799.96,4,319.98,0
+2025-03-13,Home Office,West,Ergonomic Mouse,59.99,1,24,0
+2025-03-14,Corporate,South,Mechanical Keyboard,389.97,3,155.99,0
+2025-03-15,Consumer,North,Wireless Earbuds,449.95,5,179.98,0
+2025-03-16,Consumer,West,Ergonomic Mouse,299.95,5,119.98,0
+2025-03-17,Corporate,North,4K Monitor,349.99,1,140,0
+2025-03-18,Home Office,North,Ergonomic Mouse,101.98,2,29.99,0.15
+2025-03-19,Home Office,North,Wireless Earbuds,86.39,1,32.4,0.04
+2025-03-20,Consumer,South,Mechanical Keyboard,519.96,4,207.98,0
+2025-03-21,Home Office,East,Ergonomic Mouse,118.78,2,46.79,0.01
+2025-03-22,Corporate,North,Wireless Earbuds,359.96,4,143.98,0
+2025-03-23,Home Office,East,Ergonomic Mouse,56.99,1,21,0.05
+2025-03-24,Consumer,West,Mechanical Keyboard,259.98,2,103.99,0
+2025-03-25,Consumer,North,Ergonomic Mouse,215.96,4,71.98,0.1
+2025-03-26,Consumer,East,Smart Watch,199.99,1,80,0
+2025-03-27,Home Office,West,Smart Watch,799.96,4,319.98,0
+2025-03-28,Consumer,West,Smart Watch,939.95,5,339.98,0.06
+2025-03-29,Home Office,South,Ergonomic Mouse,179.97,3,71.99,0
+2025-03-30,Home Office,North,Smart Watch,809.96,5,209.99,0.19
+2025-03-31,Home Office,East,Smart Watch,199.99,1,80,0
+2025-04-01,Corporate,East,Smart Watch,599.97,3,239.99,0
+2025-04-02,Corporate,North,Mechanical Keyboard,519.96,4,207.98,0
+2025-04-03,Home Office,West,4K Monitor,1399.96,4,559.98,0
+2025-04-04,Home Office,South,Ergonomic Mouse,293.95,5,113.98,0.02
+2025-04-05,Corporate,South,Wireless Earbuds,436.45,5,166.48,0.03
+2025-04-06,Home Office,South,Smart Watch,599.97,3,239.99,0
+2025-04-07,Home Office,South,Smart Watch,799.96,4,319.98,0
+2025-04-08,Corporate,West,Ergonomic Mouse,160.17,3,52.19,0.11
+2025-04-09,Corporate,West,Wireless Earbuds,359.96,4,143.98,0
+2025-04-10,Corporate,North,Wireless Earbuds,359.96,4,143.98,0
+2025-04-11,Consumer,East,Ergonomic Mouse,59.99,1,24,0
+2025-04-12,Home Office,South,Wireless Earbuds,449.95,5,179.98,0
+2025-04-13,Home Office,South,4K Monitor,1399.96,4,559.98,0
+2025-04-14,Home Office,South,Ergonomic Mouse,119.98,2,47.99,0
+2025-04-15,Corporate,North,Wireless Earbuds,359.96,4,143.98,0
+2025-04-16,Consumer,North,Wireless Earbuds,226.77,3,64.79,0.16
+2025-04-17,Home Office,East,Mechanical Keyboard,519.96,4,207.98,0
+2025-04-18,Corporate,South,Mechanical Keyboard,514.76,4,202.78,0.01
+2025-04-19,Consumer,North,Ergonomic Mouse,179.97,3,71.99,0
+2025-04-20,Home Office,South,Smart Watch,335.98,2,95.99,0.16
+2025-04-21,Home Office,South,Ergonomic Mouse,59.99,1,24,0
+2025-04-22,Consumer,East,Mechanical Keyboard,259.98,2,103.99,0
+2025-04-23,Corporate,East,Mechanical Keyboard,389.97,3,155.99,0
+2025-04-24,Home Office,West,Smart Watch,799.96,4,319.98,0
+2025-04-25,Corporate,West,4K Monitor,290.49,1,80.5,0.17
+2025-04-26,Corporate,West,Mechanical Keyboard,519.96,4,207.98,0
+2025-04-27,Corporate,East,Smart Watch,521.97,3,161.99,0.13
+2025-04-28,Corporate,North,4K Monitor,587.98,2,167.99,0.16
+2025-04-29,Consumer,North,Wireless Earbuds,269.97,3,107.99,0
+2025-04-30,Home Office,North,Smart Watch,799.96,4,319.98,0
+2025-05-01,Home Office,West,Ergonomic Mouse,179.97,3,71.99,0
+2025-05-02,Consumer,West,4K Monitor,1049.97,3,419.99,0
+2025-05-03,Home Office,South,Wireless Earbuds,449.95,5,179.98,0
+2025-05-04,Home Office,East,4K Monitor,349.99,1,140,0
+2025-05-05,Home Office,East,Ergonomic Mouse,239.96,4,95.98,0
+2025-05-06,Consumer,South,4K Monitor,1049.97,3,419.99,0
+2025-05-07,Corporate,South,4K Monitor,699.98,2,279.99,0
+2025-05-08,Corporate,South,Smart Watch,399.98,2,159.99,0
+2025-05-09,Home Office,North,4K Monitor,311.49,1,101.5,0.11
+2025-05-10,Corporate,North,Wireless Earbuds,331.16,4,115.18,0.08
+2025-05-11,Home Office,South,Smart Watch,599.97,3,239.99,0
+2025-05-12,Corporate,West,4K Monitor,349.99,1,140,0
+2025-05-13,Corporate,West,4K Monitor,699.98,2,279.99,0
+2025-05-14,Consumer,South,Mechanical Keyboard,115.69,1,37.7,0.11
+2025-05-15,Corporate,West,Smart Watch,799.96,4,319.98,0
+2025-05-16,Home Office,East,Smart Watch,599.97,3,239.99,0
+2025-05-17,Corporate,South,Ergonomic Mouse,299.95,5,119.98,0
+2025-05-18,Consumer,West,Smart Watch,199.99,1,80,0
+2025-05-19,Corporate,East,4K Monitor,1049.97,3,419.99,0
+2025-05-20,Consumer,South,4K Monitor,1399.96,4,559.98,0
+2025-05-21,Corporate,East,4K Monitor,1049.97,3,419.99,0
+2025-05-22,Consumer,North,4K Monitor,566.98,2,146.99,0.19
+2025-05-23,Corporate,East,Wireless Earbuds,79.19,1,25.2,0.12
+2025-05-24,Corporate,South,Smart Watch,799.96,4,319.98,0
+2025-05-25,Home Office,South,Smart Watch,399.98,2,159.99,0
+2025-05-26,Consumer,West,4K Monitor,1749.95,5,699.98,0
+2025-05-27,Home Office,North,Mechanical Keyboard,519.96,4,207.98,0
+2025-05-28,Home Office,West,Wireless Earbuds,89.99,1,36,0
+2025-05-29,Home Office,East,Wireless Earbuds,89.99,1,36,0
+2025-05-30,Corporate,South,Wireless Earbuds,78.29,1,24.3,0.13
+2025-05-31,Corporate,West,Mechanical Keyboard,244.38,2,88.39,0.06
+2025-06-01,Home Office,South,Ergonomic Mouse,278.95,5,98.98,0.07
+2025-06-02,Consumer,West,4K Monitor,573.98,2,153.99,0.18
+2025-06-03,Consumer,East,Mechanical Keyboard,499.16,4,187.18,0.04
+2025-06-04,Home Office,East,Ergonomic Mouse,299.95,5,119.98,0
+2025-06-05,Consumer,East,Smart Watch,175.99,1,56,0.12
+2025-06-06,Consumer,South,Wireless Earbuds,179.98,2,71.99,0
+2025-06-07,Consumer,North,Ergonomic Mouse,59.99,1,24,0
+2025-06-08,Corporate,East,Wireless Earbuds,229.47,3,67.49,0.15
+2025-06-09,Corporate,South,4K Monitor,349.99,1,140,0
+2025-06-10,Corporate,West,Wireless Earbuds,359.96,4,143.98,0
+2025-06-11,Corporate,East,Wireless Earbuds,320.36,4,104.38,0.11
+2025-06-12,Consumer,South,4K Monitor,699.98,2,279.99,0
+2025-06-13,Corporate,West,Ergonomic Mouse,239.96,4,95.98,0
+2025-06-14,Corporate,East,Wireless Earbuds,143.98,2,35.99,0.2
+2025-06-15,Consumer,North,Ergonomic Mouse,59.99,1,24,0
+2025-06-16,Corporate,East,Mechanical Keyboard,129.99,1,52,0
+2025-06-17,Home Office,South,Wireless Earbuds,89.99,1,36,0
+2025-06-18,Corporate,West,Wireless Earbuds,82.79,1,28.8,0.08
+2025-06-19,Corporate,West,4K Monitor,699.98,2,279.99,0
+2025-06-20,Consumer,South,Smart Watch,199.99,1,80,0
+2025-06-21,Consumer,West,Mechanical Keyboard,257.38,2,101.39,0.01
+2025-06-22,Home Office,South,Wireless Earbuds,269.97,3,107.99,0
+2025-06-23,Corporate,North,Smart Watch,399.98,2,159.99,0
+2025-06-24,Consumer,North,4K Monitor,1522.46,5,472.49,0.13
+2025-06-25,Corporate,South,Smart Watch,999.95,5,399.98,0
+2025-06-26,Home Office,East,4K Monitor,1749.95,5,699.98,0
+2025-06-27,Consumer,South,Wireless Earbuds,269.97,3,107.99,0
+2025-06-28,Corporate,East,Smart Watch,999.95,5,399.98,0
+2025-06-29,Home Office,West,Wireless Earbuds,382.46,5,112.49,0.15
+2025-06-30,Corporate,West,4K Monitor,1749.95,5,699.98,0
+2025-07-01,Consumer,South,Smart Watch,999.95,5,399.98,0
+2025-07-02,Corporate,West,Ergonomic Mouse,299.95,5,119.98,0
+2025-07-03,Corporate,East,Mechanical Keyboard,244.38,2,88.39,0.06
+2025-07-04,Home Office,West,Ergonomic Mouse,179.97,3,71.99,0
+2025-07-05,Corporate,South,Smart Watch,799.96,4,319.98,0
+2025-07-06,Corporate,South,Wireless Earbuds,179.98,2,71.99,0
+2025-07-07,Consumer,West,Wireless Earbuds,359.96,4,143.98,0
+2025-07-08,Consumer,East,Ergonomic Mouse,239.96,4,95.98,0
+2025-07-09,Corporate,South,4K Monitor,1749.95,5,699.98,0
+2025-07-10,Consumer,South,Ergonomic Mouse,59.99,1,24,0
+2025-07-11,Corporate,North,4K Monitor,699.98,2,279.99,0
+2025-07-12,Consumer,West,4K Monitor,286.99,1,77,0.18
+2025-07-13,Home Office,West,Smart Watch,399.98,2,159.99,0
+2025-07-14,Home Office,West,Mechanical Keyboard,109.19,1,31.2,0.16
+2025-07-15,Home Office,East,4K Monitor,1749.95,5,699.98,0
+2025-07-16,Home Office,North,Ergonomic Mouse,57.59,1,21.6,0.04
+2025-07-17,Corporate,North,Wireless Earbuds,269.97,3,107.99,0
+2025-07-18,Corporate,West,4K Monitor,349.99,1,140,0
+2025-07-19,Home Office,North,4K Monitor,587.98,2,167.99,0.16
