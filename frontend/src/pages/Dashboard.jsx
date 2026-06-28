@@ -37,13 +37,13 @@ export default function Dashboard({ activeDataset, token, fetchDatasets, setActi
   }, [activeDataset]);
 
   const calculateSummary = () => {
-    const schema = activeDataset.schema;
+    const schema = activeDataset.schema || {};
     const cols = Object.keys(schema);
     let numeric = 0;
     let categorical = 0;
 
     cols.forEach(col => {
-      const type = schema[col].type;
+      const type = schema[col] ? schema[col].type : 'TEXT';
       if (type === 'INTEGER' || type === 'REAL') {
         numeric++;
       } else {
@@ -52,8 +52,8 @@ export default function Dashboard({ activeDataset, token, fetchDatasets, setActi
     });
 
     setSummaryData({
-      rows: activeDataset.row_count,
-      cols: activeDataset.col_count,
+      rows: activeDataset.row_count || 0,
+      cols: activeDataset.col_count || 0,
       numeric,
       categorical
     });

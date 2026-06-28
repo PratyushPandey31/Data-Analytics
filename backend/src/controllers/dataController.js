@@ -356,10 +356,14 @@ exports.loadSamples = async (req, res) => {
 
       loaded.push({
         id: datasetResult.id,
-        original_name: sample.name,
+        user_id: userId,
+        filename: uniqueFilename,
         table_name: tableName,
+        original_name: sample.name,
         row_count: rows.length,
-        col_count: headers.length
+        col_count: headers.length,
+        file_size: stat.size,
+        schema: schemaMap
       });
     }
 
