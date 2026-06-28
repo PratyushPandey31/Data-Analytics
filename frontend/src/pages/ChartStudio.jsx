@@ -10,6 +10,7 @@ import {
   LineElement,
   ArcElement,
   RadialLinearScale,
+  Filler,
   Tooltip,
   Legend
 } from 'chart.js';
@@ -22,6 +23,7 @@ ChartJS.register(
   LineElement,
   ArcElement,
   RadialLinearScale,
+  Filler,
   Tooltip,
   Legend
 );
