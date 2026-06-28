@@ -52,8 +52,8 @@ const tourSteps = [
 ];
 
 export default function App() {
-  const [token, setToken] = useState(localStorage.getItem('nova_token') || '');
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('nova_user') || 'null'));
+  const [token, setToken] = useState('');
+  const [user, setUser] = useState(null);
   const [activePage, setActivePage] = useState('dashboard');
   const [datasets, setDatasets] = useState([]);
   const [activeDataset, setActiveDataset] = useState(null);
