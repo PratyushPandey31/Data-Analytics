@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart3, Play, Download, LayoutGrid, FileImage } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, Sparkles } from 'lucide-react';
 import { Bar, Line, Pie, Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -44,7 +44,6 @@ export default function ChartStudio({ activeDataset, token }) {
 
   useEffect(() => {
     if (columns.length > 0) {
-      // Auto pick X (categorical) and Y (numerical)
       const catCol = columns.find(c => activeDataset.schema[c].type === 'TEXT') || columns[0];
       const numCol = numericColumns[0] || columns[0];
       setXCol(catCol);
@@ -61,7 +60,6 @@ export default function ChartStudio({ activeDataset, token }) {
     const xSanitized = activeDataset.schema[xCol].sanitized;
     const ySanitized = activeDataset.schema[yCol].sanitized;
 
-    // Dynamically construct SQL aggregation query over the ENTIRE dataset
     let selectClause = `"${xSanitized}" as label`;
     let sqlQuery = '';
 
@@ -101,7 +99,6 @@ export default function ChartStudio({ activeDataset, token }) {
         throw new Error('Aggregation returned 0 records. Check column values.');
       }
 
-      // Format results for Chart.js
       const labels = data.rows.map(r => r.label === null ? 'NULL' : String(r.label));
       const values = data.rows.map(r => parseFloat(r.val || 0));
 
@@ -112,17 +109,15 @@ export default function ChartStudio({ activeDataset, token }) {
           data: values,
           backgroundColor: chartType === 'pie'
             ? [
-                'rgba(0, 242, 254, 0.55)',
-                'rgba(255, 0, 127, 0.55)',
-                'rgba(0, 245, 160, 0.55)',
-                'rgba(255, 215, 0, 0.55)',
-                'rgba(127, 0, 255, 0.55)',
-                'rgba(0, 112, 243, 0.55)',
-                'rgba(255, 138, 0, 0.55)'
+                'rgba(0, 242, 254, 0.6)',
+                'rgba(255, 0, 127, 0.6)',
+                'rgba(0, 245, 160, 0.6)',
+                'rgba(255, 215, 0, 0.6)',
+                'rgba(127, 0, 255, 0.6)',
+                'rgba(0, 112, 243, 0.6)',
+                'rgba(255, 138, 0, 0.6)'
               ]
-            : chartType === 'line' 
-              ? 'rgba(0, 242, 254, 0.15)' 
-              : 'rgba(0, 242, 254, 0.55)',
+            : 'rgba(0, 242, 254, 0.55)',
           borderColor: chartType === 'pie'
             ? [
                 'rgb(0, 242, 254)',
@@ -136,7 +131,7 @@ export default function ChartStudio({ activeDataset, token }) {
             : 'rgb(0, 242, 254)',
           borderWidth: chartType === 'line' ? 3 : 1.5,
           fill: chartType === 'line',
-          tension: 0.3
+          tension: 0.4
         }]
       });
 
@@ -147,6 +142,93 @@ export default function ChartStudio({ activeDataset, token }) {
     }
   };
 
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 1000,
+      easing: 'easeOutQuart'
+    },
+    scales: chartType !== 'pie' ? {
+      x: {
+        grid: {
+          color: 'rgba(255, 255, 255, 0.03)',
+          borderDash: [5, 5]
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.6)',
+          font: { family: 'var(--font-sans)', size: 10, weight: '500' }
+        }
+      },
+      y: {
+        grid: {
+          color: 'rgba(255, 255, 255, 0.03)',
+          borderDash: [5, 5]
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.6)',
+          font: { family: 'var(--font-sans)', size: 10, weight: '500' }
+        }
+      }
+    } : undefined,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          color: 'rgba(255, 255, 255, 0.85)',
+          font: { family: 'var(--font-sans)', size: 11, weight: '600' }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(10, 16, 36, 0.85)',
+        borderColor: 'rgba(0, 242, 254, 0.25)',
+        borderWidth: 1,
+        titleColor: '#fff',
+        titleFont: { family: 'var(--font-sans)', weight: '700' },
+        bodyColor: 'rgba(255, 255, 255, 0.95)',
+        bodyFont: { family: 'var(--font-sans)' },
+        padding: 10,
+        cornerRadius: 6,
+        displayColors: true
+      }
+    }
+  };
+
+  // Callback helper to inject linear canvas gradient
+  const getGradientData = (canvas) => {
+    if (!chartData) return {};
+    const ctx = canvas.getContext('2d');
+    const chartHeight = canvas.offsetHeight || 300;
+    
+    // Create glowing gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
+    
+    let startColor = 'rgba(0, 242, 254, 0.45)';
+    let endColor = 'rgba(0, 242, 254, 0)';
+    let borderColor = 'rgb(0, 242, 254)';
+    
+    if (chartType === 'line') {
+      startColor = 'rgba(0, 242, 254, 0.2)';
+      endColor = 'rgba(0, 242, 254, 0.01)';
+    } else if (chartType === 'radar') {
+      startColor = 'rgba(255, 0, 127, 0.25)';
+      endColor = 'rgba(255, 0, 127, 0.02)';
+      borderColor = 'rgb(255, 0, 127)';
+    }
+
+    gradient.addColorStop(0, startColor);
+    gradient.addColorStop(1, endColor);
+
+    return {
+      labels: chartData.labels,
+      datasets: [{
+        ...chartData.datasets[0],
+        backgroundColor: chartType === 'pie' ? chartData.datasets[0].backgroundColor : gradient,
+        borderColor: chartType === 'pie' ? chartData.datasets[0].borderColor : borderColor
+      }]
+    };
+  };
+
   if (!activeDataset) {
     return (
       <div style={{ textAlign: 'center', padding: '50px 0', color: 'rgba(255,255,255,0.4)' }}>
@@ -154,18 +236,6 @@ export default function ChartStudio({ activeDataset, token }) {
       </div>
     );
   }
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color: '#fff', font: { family: 'var(--font-sans)', size: 11 } } }
-    },
-    scales: chartType !== 'pie' ? {
-      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
-      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.5)' } }
-    } : undefined
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -197,7 +267,6 @@ export default function ChartStudio({ activeDataset, token }) {
         <div className="glass-panel" style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <h3 style={{ fontSize: '18px' }}>Chart Studio Config</h3>
 
-          {/* Chart Type Selector */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Visual Layout Type</label>
             <select value={chartType} onChange={(e) => setChartType(e.target.value)}>
@@ -208,7 +277,6 @@ export default function ChartStudio({ activeDataset, token }) {
             </select>
           </div>
 
-          {/* X Axis Selector */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Independent Axis (X)</label>
             <select value={xCol} onChange={(e) => setXCol(e.target.value)}>
@@ -217,7 +285,6 @@ export default function ChartStudio({ activeDataset, token }) {
             </select>
           </div>
 
-          {/* Y Axis Selector */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Dependent Values (Y)</label>
             <select value={yCol} onChange={(e) => setYCol(e.target.value)}>
@@ -226,7 +293,6 @@ export default function ChartStudio({ activeDataset, token }) {
             </select>
           </div>
 
-          {/* Aggregation Selector */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Aggregation Operator</label>
             <select value={aggType} onChange={(e) => setAggType(e.target.value)}>
@@ -238,7 +304,6 @@ export default function ChartStudio({ activeDataset, token }) {
             </select>
           </div>
 
-          {/* Generate Button */}
           <button
             onClick={handleBuildChart}
             disabled={loading || !xCol || !yCol}
@@ -262,10 +327,14 @@ export default function ChartStudio({ activeDataset, token }) {
           background: 'rgba(10, 15, 36, 0.25)',
           height: '460px',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          boxShadow: '0 20px 50px 0 rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 242, 254, 0.05), inset 0 0 20px 0 rgba(255, 255, 255, 0.02)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ fontSize: '18px' }}>Visual Output Preview</h3>
+            <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={16} className="text-glow-cyan" />
+              <span>Visual Output Preview</span>
+            </h3>
           </div>
 
           {loading ? (
@@ -283,10 +352,10 @@ export default function ChartStudio({ activeDataset, token }) {
             </div>
           ) : chartData ? (
             <div style={{ position: 'relative', flexGrow: 1, height: '90%' }}>
-              {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
-              {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
-              {chartType === 'pie' && <Pie data={chartData} options={chartOptions} />}
-              {chartType === 'radar' && <Radar data={chartData} options={chartOptions} />}
+              {chartType === 'bar' && <Bar data={getGradientData} options={chartOptions} />}
+              {chartType === 'line' && <Line data={getGradientData} options={chartOptions} />}
+              {chartType === 'pie' && <Pie data={getGradientData} options={chartOptions} />}
+              {chartType === 'radar' && <Radar data={getGradientData} options={chartOptions} />}
             </div>
           ) : (
             <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justify: 'center', color: 'rgba(255,255,255,0.3)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px' }}>
