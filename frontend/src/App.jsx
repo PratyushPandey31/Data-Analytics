@@ -161,6 +161,7 @@ export default function App() {
               token={token} 
               fetchDatasets={fetchDatasets}
               setActiveDataset={setActiveDataset}
+              user={user}
             />
           )}
 
