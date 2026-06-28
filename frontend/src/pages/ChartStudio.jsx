@@ -102,37 +102,81 @@ export default function ChartStudio({ activeDataset, token }) {
       const labels = data.rows.map(r => r.label === null ? 'NULL' : String(r.label));
       const values = data.rows.map(r => parseFloat(r.val || 0));
 
-      setChartData({
-        labels,
-        datasets: [{
+      let datasets = [];
+
+      if (chartType === 'line') {
+        datasets = [{
           label: `${aggType} of ${yCol}`,
           data: values,
-          backgroundColor: chartType === 'pie'
-            ? [
-                'rgba(0, 242, 254, 0.6)',
-                'rgba(255, 0, 127, 0.6)',
-                'rgba(0, 245, 160, 0.6)',
-                'rgba(255, 215, 0, 0.6)',
-                'rgba(127, 0, 255, 0.6)',
-                'rgba(0, 112, 243, 0.6)',
-                'rgba(255, 138, 0, 0.6)'
-              ]
-            : 'rgba(0, 242, 254, 0.55)',
-          borderColor: chartType === 'pie'
-            ? [
-                'rgb(0, 242, 254)',
-                'rgb(255, 0, 127)',
-                'rgb(0, 245, 160)',
-                'rgb(255, 215, 0)',
-                'rgb(127, 0, 255)',
-                'rgb(0, 112, 243)',
-                'rgb(255, 138, 0)'
-              ]
-            : 'rgb(0, 242, 254)',
-          borderWidth: chartType === 'line' ? 3 : 1.5,
-          fill: chartType === 'line',
-          tension: 0.4
-        }]
+          backgroundColor: 'rgba(0, 242, 254, 0.08)',
+          borderColor: 'rgb(0, 242, 254)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(0, 242, 254)',
+          pointBorderColor: '#070913',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgb(0, 242, 254)',
+          pointHoverBorderWidth: 3
+        }];
+      } else if (chartType === 'radar') {
+        datasets = [{
+          label: `${aggType} of ${yCol}`,
+          data: values,
+          backgroundColor: 'rgba(255, 0, 127, 0.25)',
+          borderColor: 'rgb(255, 0, 127)',
+          borderWidth: 2.5,
+          pointBackgroundColor: 'rgb(255, 0, 127)',
+          pointBorderColor: '#070913',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true
+        }];
+      } else if (chartType === 'pie') {
+        datasets = [{
+          label: `${aggType} of ${yCol}`,
+          data: values,
+          backgroundColor: [
+            'rgba(0, 242, 254, 0.55)',
+            'rgba(255, 0, 127, 0.55)',
+            'rgba(0, 245, 160, 0.55)',
+            'rgba(255, 215, 0, 0.55)',
+            'rgba(127, 0, 255, 0.55)',
+            'rgba(0, 112, 243, 0.55)',
+            'rgba(255, 138, 0, 0.55)'
+          ],
+          borderColor: [
+            'rgb(0, 242, 254)',
+            'rgb(255, 0, 127)',
+            'rgb(0, 245, 160)',
+            'rgb(255, 215, 0)',
+            'rgb(127, 0, 255)',
+            'rgb(0, 112, 243)',
+            'rgb(255, 138, 0)'
+          ],
+          borderWidth: 1.5
+        }];
+      } else {
+        datasets = [{
+          label: `${aggType} of ${yCol}`,
+          data: values,
+          backgroundColor: 'rgba(0, 242, 254, 0.4)',
+          borderColor: 'rgb(0, 242, 254)',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBackgroundColor: 'rgba(0, 242, 254, 0.65)',
+          hoverBorderColor: 'rgb(0, 242, 254)',
+          hoverBorderWidth: 2
+        }];
+      }
+
+      setChartData({
+        labels,
+        datasets
       });
 
     } catch (err) {
@@ -194,54 +238,7 @@ export default function ChartStudio({ activeDataset, token }) {
     }
   };
 
-  // Callback helper to inject linear canvas gradient
-  const getGradientData = (canvas) => {
-    if (!chartData || !chartData.datasets || chartData.datasets.length === 0) {
-      return { labels: [], datasets: [] };
-    }
-    
-    if (!canvas) {
-      return chartData;
-    }
 
-    try {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return chartData;
-      
-      const chartHeight = canvas.offsetHeight || 300;
-      
-      // Create glowing gradient
-      const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
-      
-      let startColor = 'rgba(0, 242, 254, 0.45)';
-      let endColor = 'rgba(0, 242, 254, 0)';
-      let borderColor = 'rgb(0, 242, 254)';
-      
-      if (chartType === 'line') {
-        startColor = 'rgba(0, 242, 254, 0.2)';
-        endColor = 'rgba(0, 242, 254, 0.01)';
-      } else if (chartType === 'radar') {
-        startColor = 'rgba(255, 0, 127, 0.25)';
-        endColor = 'rgba(255, 0, 127, 0.02)';
-        borderColor = 'rgb(255, 0, 127)';
-      }
-
-      gradient.addColorStop(0, startColor);
-      gradient.addColorStop(1, endColor);
-
-      return {
-        labels: chartData.labels,
-        datasets: [{
-          ...chartData.datasets[0],
-          backgroundColor: chartType === 'pie' ? chartData.datasets[0].backgroundColor : gradient,
-          borderColor: chartType === 'pie' ? chartData.datasets[0].borderColor : borderColor
-        }]
-      };
-    } catch (e) {
-      console.warn("Gradient generation failed, falling back to raw data", e);
-      return chartData;
-    }
-  };
 
   if (!activeDataset) {
     return (
@@ -366,10 +363,10 @@ export default function ChartStudio({ activeDataset, token }) {
             </div>
           ) : chartData ? (
             <div style={{ position: 'relative', flexGrow: 1, height: '90%' }}>
-              {chartType === 'bar' && <Bar data={getGradientData} options={chartOptions} />}
-              {chartType === 'line' && <Line data={getGradientData} options={chartOptions} />}
-              {chartType === 'pie' && <Pie data={getGradientData} options={chartOptions} />}
-              {chartType === 'radar' && <Radar data={getGradientData} options={chartOptions} />}
+              {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
+              {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
+              {chartType === 'pie' && <Pie data={chartData} options={chartOptions} />}
+              {chartType === 'radar' && <Radar data={chartData} options={chartOptions} />}
             </div>
           ) : (
             <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justify: 'center', color: 'rgba(255,255,255,0.3)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px' }}>
