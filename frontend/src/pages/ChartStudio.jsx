@@ -196,37 +196,51 @@ export default function ChartStudio({ activeDataset, token }) {
 
   // Callback helper to inject linear canvas gradient
   const getGradientData = (canvas) => {
-    if (!chartData) return {};
-    const ctx = canvas.getContext('2d');
-    const chartHeight = canvas.offsetHeight || 300;
+    if (!chartData || !chartData.datasets || chartData.datasets.length === 0) {
+      return { labels: [], datasets: [] };
+    }
     
-    // Create glowing gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
-    
-    let startColor = 'rgba(0, 242, 254, 0.45)';
-    let endColor = 'rgba(0, 242, 254, 0)';
-    let borderColor = 'rgb(0, 242, 254)';
-    
-    if (chartType === 'line') {
-      startColor = 'rgba(0, 242, 254, 0.2)';
-      endColor = 'rgba(0, 242, 254, 0.01)';
-    } else if (chartType === 'radar') {
-      startColor = 'rgba(255, 0, 127, 0.25)';
-      endColor = 'rgba(255, 0, 127, 0.02)';
-      borderColor = 'rgb(255, 0, 127)';
+    if (!canvas) {
+      return chartData;
     }
 
-    gradient.addColorStop(0, startColor);
-    gradient.addColorStop(1, endColor);
+    try {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return chartData;
+      
+      const chartHeight = canvas.offsetHeight || 300;
+      
+      // Create glowing gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
+      
+      let startColor = 'rgba(0, 242, 254, 0.45)';
+      let endColor = 'rgba(0, 242, 254, 0)';
+      let borderColor = 'rgb(0, 242, 254)';
+      
+      if (chartType === 'line') {
+        startColor = 'rgba(0, 242, 254, 0.2)';
+        endColor = 'rgba(0, 242, 254, 0.01)';
+      } else if (chartType === 'radar') {
+        startColor = 'rgba(255, 0, 127, 0.25)';
+        endColor = 'rgba(255, 0, 127, 0.02)';
+        borderColor = 'rgb(255, 0, 127)';
+      }
 
-    return {
-      labels: chartData.labels,
-      datasets: [{
-        ...chartData.datasets[0],
-        backgroundColor: chartType === 'pie' ? chartData.datasets[0].backgroundColor : gradient,
-        borderColor: chartType === 'pie' ? chartData.datasets[0].borderColor : borderColor
-      }]
-    };
+      gradient.addColorStop(0, startColor);
+      gradient.addColorStop(1, endColor);
+
+      return {
+        labels: chartData.labels,
+        datasets: [{
+          ...chartData.datasets[0],
+          backgroundColor: chartType === 'pie' ? chartData.datasets[0].backgroundColor : gradient,
+          borderColor: chartType === 'pie' ? chartData.datasets[0].borderColor : borderColor
+        }]
+      };
+    } catch (e) {
+      console.warn("Gradient generation failed, falling back to raw data", e);
+      return chartData;
+    }
   };
 
   if (!activeDataset) {
