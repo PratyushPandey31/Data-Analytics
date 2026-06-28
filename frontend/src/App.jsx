@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Sparkles, Database, Terminal, BarChart3, Brain } from 'lucide-react';
 import Auth from './pages/Auth';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
@@ -11,6 +12,45 @@ import AICopilot from './pages/AICopilot';
 import MLSandbox from './pages/MLSandbox';
 import DataRefiner from './pages/DataRefiner';
 
+const tourSteps = [
+  {
+    title: "Welcome to Nova Analytics",
+    description: "Welcome to your new data intelligence node. Nova Analytics compiles datasets, executes queries, and runs machine learning models over an integrated SQLite core.",
+    icon: Sparkles,
+    color: "var(--neon-cyan)"
+  },
+  {
+    title: "1. Data Ingestion Node",
+    description: "Get started by navigating to the Datasets tab. Here, you can drag & drop your own CSV/JSON files or instantly deploy demo sets with a single click.",
+    icon: Database,
+    color: "var(--neon-gold)"
+  },
+  {
+    title: "2. Visual Chart Studio",
+    description: "Design custom visual dashboards. Select axes, aggregation operators (SUM, AVG, COUNT), and plot interactive bar, line, radar, or pie charts.",
+    icon: BarChart3,
+    color: "var(--neon-emerald)"
+  },
+  {
+    title: "3. Relational SQL Engine",
+    description: "Run read-only SQL queries on your tables inside the interactive SQL terminal. Includes auto-formatting, history logs, and CSV/JSON exporters.",
+    icon: Terminal,
+    color: "var(--neon-cyan)"
+  },
+  {
+    title: "4. Neural AI Copilot",
+    description: "Skip writing code! Ask the AI Copilot questions in natural language. It translates your text to SQL, runs it, and draws the output charts automatically.",
+    icon: Sparkles,
+    color: "var(--neon-magenta)"
+  },
+  {
+    title: "5. Feature Modeling Sandbox",
+    description: "Train regressions to forecast values, partition records into cluster groups, and detect anomalies using standard Z-score deviations.",
+    icon: Brain,
+    color: "var(--neon-violet)"
+  }
+];
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('nova_token') || '');
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('nova_user') || 'null'));
@@ -18,6 +58,8 @@ export default function App() {
   const [datasets, setDatasets] = useState([]);
   const [activeDataset, setActiveDataset] = useState(null);
   const [fetching, setFetching] = useState(false);
+  const [showTour, setShowTour] = useState(!localStorage.getItem('nova_tour_completed'));
+  const [tourStep, setTourStep] = useState(0);
 
   useEffect(() => {
     if (token) {
@@ -117,6 +159,8 @@ export default function App() {
             <Dashboard 
               activeDataset={activeDataset} 
               token={token} 
+              fetchDatasets={fetchDatasets}
+              setActiveDataset={setActiveDataset}
             />
           )}
 
@@ -173,6 +217,122 @@ export default function App() {
             />
           )}
         </main>
+      </div>
+      {showTour && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(3, 5, 12, 0.75)',
+          backdropFilter: 'blur(15px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.3s'
+        }}>
+          <div className="glass-panel pulse-glowing" style={{
+            width: '90%',
+            maxWidth: '520px',
+            padding: '40px',
+            background: 'rgba(10, 16, 36, 0.7)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '20px'
+          }}>
+            {/* Step Icon */}
+            {React.createElement(tourSteps[tourStep].icon, {
+              size: 48,
+              style: {
+                color: tourSteps[tourStep].color,
+                filter: `drop-shadow(0 0 10px ${tourSteps[tourStep].color}50)`
+              }
+            })}
+
+            <h3 style={{ fontSize: '20px', fontWeight: '800' }}>
+              {tourSteps[tourStep].title}
+            </h3>
+            
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13.5px', lineHeight: '1.6', minHeight: '80px' }}>
+              {tourSteps[tourStep].description}
+            </p>
+
+            {/* Stepper Dots */}
+            <div style={{ display: 'flex', gap: '8px', margin: '10px 0' }}>
+              {tourSteps.map((_, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: idx === tourStep ? tourSteps[tourStep].color : 'rgba(255,255,255,0.15)',
+                    boxShadow: idx === tourStep ? `0 0 8px ${tourSteps[tourStep].color}` : 'none',
+                    transition: 'all 0.3s'
+                  }}
+                ></div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', marginTop: '15px' }}>
+              <button
+                onClick={() => {
+                  localStorage.setItem('nova_tour_completed', 'true');
+                  setShowTour(false);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}
+              >
+                Skip Tour
+              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {tourStep > 0 && (
+                  <button
+                    onClick={() => setTourStep(prev => prev - 1)}
+                    className="btn-glass"
+                    style={{ padding: '6px 16px', fontSize: '12px' }}
+                  >
+                    Back
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => {
+                    if (tourStep < tourSteps.length - 1) {
+                      setTourStep(prev => prev + 1);
+                    } else {
+                      localStorage.setItem('nova_tour_completed', 'true');
+                      setShowTour(false);
+                    }
+                  }}
+                  className="btn-primary"
+                  style={{
+                    padding: '6px 20px',
+                    fontSize: '12px',
+                    background: `linear-gradient(135deg, ${tourSteps[tourStep].color} 0%, var(--neon-blue) 100%)`,
+                    boxShadow: `0 4px 15px ${tourSteps[tourStep].color}30`,
+                    color: '#03050c'
+                  }}
+                >
+                  {tourStep === tourSteps.length - 1 ? 'Get Started' : 'Next'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Columns, Hash, FileText, BarChart3, Sparkles, TrendingUp, HelpCircle } from 'lucide-react';
+import { Columns, Hash, FileText, BarChart3, Sparkles, TrendingUp, Database, Plus, Play } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import confetti from 'canvas-confetti';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,12 +13,13 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-export default function Dashboard({ activeDataset, token }) {
+export default function Dashboard({ activeDataset, token, fetchDatasets, setActiveDataset }) {
   const [loading, setLoading] = useState(false);
   const [corrData, setCorrData] = useState(null);
   const [distData, setDistData] = useState(null);
   const [distLoading, setDistLoading] = useState(false);
   const [error, setError] = useState('');
+  const [ingestingSamples, setIngestingSamples] = useState(false);
   
   const [summaryData, setSummaryData] = useState({
     rows: 0,
@@ -86,7 +88,6 @@ export default function Dashboard({ activeDataset, token }) {
     setDistLoading(true);
     setDistData(null);
     
-    // Find first categorical column
     const schema = activeDataset.schema;
     const catCol = Object.keys(schema).find(col => schema[col].type === 'TEXT');
     if (!catCol) {
@@ -135,6 +136,40 @@ export default function Dashboard({ activeDataset, token }) {
     }
   };
 
+  const handleLoadSamplesDirectly = async () => {
+    setIngestingSamples(true);
+    setError('');
+    try {
+      const response = await fetch('http://localhost:5000/api/datasets/load-samples', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load demo datasets');
+      }
+
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        colors: ['#00f2fe', '#ff007f', '#7f00ff']
+      });
+
+      await fetchDatasets();
+      if (data.datasets && data.datasets.length > 0) {
+        const salesSample = data.datasets.find(d => d.original_name.includes('Sales')) || data.datasets[0];
+        setActiveDataset(salesSample);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIngestingSamples(false);
+    }
+  };
+
   const getCellColor = (val) => {
     if (val === 1) return 'rgba(0, 242, 254, 0.45)';
     if (val > 0) {
@@ -163,6 +198,106 @@ export default function Dashboard({ activeDataset, token }) {
       y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } } }
     }
   };
+
+  // COLD START DASHBOARD (When no active dataset is selected/uploaded)
+  if (!activeDataset) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        gap: '24px',
+        textAlign: 'center'
+      }}>
+        <div className="glass-panel pulse-glowing" style={{
+          padding: '50px 40px',
+          maxWidth: '650px',
+          background: 'rgba(8, 12, 32, 0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '20px'
+        }}>
+          <div style={{
+            width: '72px',
+            height: '72px',
+            borderRadius: '50%',
+            background: 'rgba(255, 0, 127, 0.08)',
+            border: '2px solid rgba(255, 0, 127, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 0 20px rgba(255, 0, 127, 0.15)',
+            marginBottom: '10px'
+          }}>
+            <Database size={32} className="text-glow-magenta" />
+          </div>
+
+          <h2 className="gradient-text-magenta-orange" style={{ 
+            fontSize: '26px', 
+            fontWeight: '900', 
+            letterSpacing: '0.05em' 
+          }}>
+            NO DATA INGESTION DETECTED
+          </h2>
+          
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14.5px', lineHeight: '1.6', maxWidth: '480px' }}>
+            The analytics core requires a target dataset to initialize visual intelligence. Inject a CSV/JSON file or immediately deploy pre-configured sample nodes.
+          </p>
+
+          {error && (
+            <div style={{
+              background: 'rgba(255,0,127,0.1)',
+              border: '1px solid rgba(255,0,127,0.2)',
+              color: '#ff80b0',
+              padding: '10px 15px',
+              borderRadius: '8px',
+              fontSize: '12px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+            <button
+              onClick={handleLoadSamplesDirectly}
+              disabled={ingestingSamples}
+              className="btn-primary hollow-glow"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-blue) 100%)',
+                boxShadow: '0 4px 15px rgba(0, 242, 254, 0.25)',
+                color: '#03050c'
+              }}
+            >
+              {ingestingSamples ? (
+                <>
+                  <div style={{
+                    width: '14px',
+                    height: '14px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(3,5,12,0.2)',
+                    borderTopColor: '#03050c',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  <span>Deploying Demos...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={14} />
+                  <span>Deploy Demo Datasets</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -271,14 +406,13 @@ export default function Dashboard({ activeDataset, token }) {
         </div>
       </div>
 
-      {/* Grid structure for Dashboard visual panels */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
         gap: '20px',
         alignItems: 'stretch'
       }}>
-        {/* Panel 1: Correlation Heatmap */}
+        {/* Panel 1: Heatmap */}
         <div className="glass-panel" style={{ padding: '25px', background: 'rgba(10, 15, 36, 0.25)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ fontSize: '17px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
@@ -375,7 +509,6 @@ export default function Dashboard({ activeDataset, token }) {
             ) : null}
           </div>
 
-          {/* Heatmap Legend */}
           {corrData && (
             <div style={{
               display: 'flex',
@@ -422,7 +555,7 @@ export default function Dashboard({ activeDataset, token }) {
               <Bar data={distData} options={distChartOptions} />
             </div>
           ) : (
-            <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', fontStyle: 'italic', fontSize: '13px' }}>
+            <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justify: 'center', color: 'rgba(255,255,255,0.3)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', fontStyle: 'italic', fontSize: '13px' }}>
               No categorical columns found to calculate distributions.
             </div>
           )}
