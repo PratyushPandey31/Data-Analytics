@@ -111,3 +111,165 @@ exports.getQueryHistory = async (req, res) => {
     res.status(500).json({ error: 'Internal server error fetching query history' });
   }
 };
+
+exports.copilotQuery = async (req, res) => {
+  const startTime = Date.now();
+  const { dataset_id, question } = req.body;
+  const userId = req.user.userId;
+
+  if (!dataset_id || !question) {
+    return res.status(400).json({ error: 'dataset_id and question are required' });
+  }
+
+  try {
+    // Verify dataset
+    const dataset = await getQuery('SELECT * FROM datasets WHERE id = ? AND user_id = ?', [dataset_id, userId]);
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+    }
+
+    const schema = JSON.parse(dataset.schema_json);
+    const qLower = question.toLowerCase();
+
+    // 1. Identify columns in the question
+    const matchedCols = [];
+    Object.keys(schema).forEach(original => {
+      const sanitized = schema[original].sanitized;
+      // Check if user mentioned original header or sanitized name
+      if (qLower.includes(original.toLowerCase()) || qLower.includes(sanitized.toLowerCase())) {
+        matchedCols.push({ original, sanitized, type: schema[original].type });
+      }
+    });
+
+    // 2. Identify aggregates
+    let aggFunc = ''; // SUM, AVG, MIN, MAX, COUNT
+    let aggLabel = '';
+    if (qLower.includes('average') || qLower.includes('mean') || qLower.includes('avg')) {
+      aggFunc = 'AVG';
+      aggLabel = 'avg';
+    } else if (qLower.includes('total') || qLower.includes('sum')) {
+      aggFunc = 'SUM';
+      aggLabel = 'total';
+    } else if (qLower.includes('maximum') || qLower.includes('max') || qLower.includes('highest') || qLower.includes('peak')) {
+      aggFunc = 'MAX';
+      aggLabel = 'max';
+    } else if (qLower.includes('minimum') || qLower.includes('min') || qLower.includes('lowest')) {
+      aggFunc = 'MIN';
+      aggLabel = 'min';
+    } else if (qLower.includes('count') || qLower.includes('number of') || qLower.includes('how many')) {
+      aggFunc = 'COUNT';
+      aggLabel = 'count';
+    }
+
+    // 3. Identify grouping columns
+    let groupByCol = null;
+    const hasGroupByKeywords = qLower.includes('by') || qLower.includes('each') || qLower.includes('per') || qLower.includes('group');
+    if (hasGroupByKeywords) {
+      groupByCol = matchedCols.find(c => c.type === 'TEXT') || matchedCols[0];
+    }
+
+    // 4. Identify limits
+    let limit = 20;
+    const topMatch = qLower.match(/top\s+(\d+)/);
+    const limitMatch = qLower.match(/limit\s+(\d+)/);
+    if (topMatch) {
+      limit = parseInt(topMatch[1], 10);
+    } else if (limitMatch) {
+      limit = parseInt(limitMatch[1], 10);
+    }
+
+    // 5. Construct query
+    let selectFields = [];
+    let groupByClause = '';
+    let orderByClause = '';
+    let whereClause = '';
+
+    // Numerical target for aggregate
+    const numCol = matchedCols.find(c => c.type === 'INTEGER' || c.type === 'REAL');
+
+    if (aggFunc && aggFunc !== 'COUNT' && numCol) {
+      const alias = `${aggLabel}_${numCol.sanitized}`;
+      if (groupByCol && groupByCol.sanitized !== numCol.sanitized) {
+        selectFields.push(`"${groupByCol.sanitized}"`);
+        selectFields.push(`${aggFunc}("${numCol.sanitized}") as "${alias}"`);
+        groupByClause = ` GROUP BY "${groupByCol.sanitized}"`;
+        orderByClause = ` ORDER BY "${alias}" DESC`;
+      } else {
+        selectFields.push(`${aggFunc}("${numCol.sanitized}") as "${alias}"`);
+      }
+    } else if (aggFunc === 'COUNT') {
+      if (groupByCol) {
+        selectFields.push(`"${groupByCol.sanitized}"`);
+        selectFields.push(`COUNT(*) as "count"`);
+        groupByClause = ` GROUP BY "${groupByCol.sanitized}"`;
+        orderByClause = ` ORDER BY "count" DESC`;
+      } else {
+        selectFields.push(`COUNT(*) as "count"`);
+      }
+    } else {
+      if (matchedCols.length > 0) {
+        selectFields = matchedCols.map(c => `"${c.sanitized}"`);
+      } else {
+        selectFields = ['*'];
+      }
+      
+      if (numCol && (qLower.includes('highest') || qLower.includes('top') || qLower.includes('max'))) {
+        orderByClause = ` ORDER BY "${numCol.sanitized}" DESC`;
+      }
+    }
+
+    // Filters
+    matchedCols.forEach(c => {
+      if (c.type === 'TEXT') {
+        const regex = new RegExp(`${c.original.toLowerCase()}\\s+(?:is|equals|=)\\s+([a-zA-Z0-9_\\s]+)`);
+        const filterMatch = qLower.match(regex);
+        if (filterMatch) {
+          const val = filterMatch[1].split(' ')[0].trim();
+          whereClause = ` WHERE "${c.sanitized}" LIKE '%${val}%'`;
+        }
+      }
+    });
+
+    const fieldsSql = selectFields.join(', ');
+    const sqlToRun = `SELECT ${fieldsSql} FROM "${dataset.table_name}"${whereClause}${groupByClause}${orderByClause} LIMIT ${limit}`;
+
+    // Execute query
+    const results = await allQuery(sqlToRun);
+    const executionTime = Date.now() - startTime;
+
+    // Log to history
+    await runQuery(
+      'INSERT INTO query_history (user_id, dataset_id, query_text, status, execution_time_ms) VALUES (?, ?, ?, ?, ?)',
+      [userId, dataset_id, `/* AI COPILOT */ ${sqlToRun}`, 'SUCCESS', executionTime]
+    );
+
+    // Suggest chart type
+    let suggestedChart = 'none';
+    if (results.length > 0) {
+      const keys = Object.keys(results[0]);
+      if (keys.length >= 2) {
+        const isTemporal = keys.some(k => k.toLowerCase().includes('date') || k.toLowerCase().includes('time') || k.toLowerCase().includes('year'));
+        if (isTemporal) {
+          suggestedChart = 'line';
+        } else if (keys.length === 2 && typeof results[0][keys[1]] === 'number') {
+          suggestedChart = results.length <= 6 ? 'pie' : 'bar';
+        } else {
+          suggestedChart = 'bar';
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      sql: sqlToRun,
+      headers: results.length > 0 ? Object.keys(results[0]) : [],
+      rows: results,
+      suggested_chart: suggestedChart,
+      execution_time_ms: executionTime
+    });
+
+  } catch (err) {
+    console.error('AI Copilot query error:', err);
+    res.status(400).json({ error: `AI Copilot SQL compile failure: ${err.message}` });
+  }
+};

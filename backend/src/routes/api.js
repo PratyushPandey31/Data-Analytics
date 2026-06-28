@@ -41,10 +41,12 @@ router.get('/datasets', auth, dataController.getDatasets);
 router.get('/datasets/:id', auth, dataController.getDatasetDetails);
 router.delete('/datasets/:id', auth, dataController.deleteDataset);
 router.post('/datasets/load-samples', auth, dataController.loadSamples);
+router.post('/datasets/clean', auth, dataController.cleanDataset);
 
 // SQL Query terminal routes
 router.post('/query/execute', auth, queryController.executeQuery);
 router.get('/query/history', auth, queryController.getQueryHistory);
+router.post('/query/copilot', auth, queryController.copilotQuery);
 
 // Analytics & ML routes
 router.post('/analytics/correlation', auth, analyticsController.getCorrelationMatrix);

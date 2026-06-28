@@ -6,7 +6,10 @@ import {
   Brain, 
   TableProperties, 
   LogOut, 
-  Activity 
+  Activity,
+  Sparkles,
+  BarChart3,
+  Wrench
 } from 'lucide-react';
 
 export default function Sidebar({ activePage, setActivePage, user, onLogout, activeDataset }) {
@@ -14,8 +17,11 @@ export default function Sidebar({ activePage, setActivePage, user, onLogout, act
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'datasets', name: 'Datasets', icon: Database },
     { id: 'explorer', name: 'Data Explorer', icon: TableProperties, requiresDataset: true },
+    { id: 'studio', name: 'Chart Studio', icon: BarChart3, requiresDataset: true },
     { id: 'sql', name: 'SQL Terminal', icon: Terminal, requiresDataset: true },
+    { id: 'copilot', name: 'AI Copilot', icon: Sparkles, requiresDataset: true },
     { id: 'ml', name: 'ML Sandbox', icon: Brain, requiresDataset: true },
+    { id: 'refiner', name: 'Data Refiner', icon: Wrench, requiresDataset: true },
   ];
 
   return (

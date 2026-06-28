@@ -5,8 +5,11 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import Datasets from './pages/Datasets';
 import DataExplorer from './pages/DataExplorer';
+import ChartStudio from './pages/ChartStudio';
 import SQLTerminal from './pages/SQLTerminal';
+import AICopilot from './pages/AICopilot';
 import MLSandbox from './pages/MLSandbox';
+import DataRefiner from './pages/DataRefiner';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('nova_token') || '');
@@ -134,8 +137,22 @@ export default function App() {
             />
           )}
 
+          {activePage === 'studio' && (
+            <ChartStudio 
+              activeDataset={activeDataset} 
+              token={token} 
+            />
+          )}
+
           {activePage === 'sql' && (
             <SQLTerminal 
+              activeDataset={activeDataset} 
+              token={token} 
+            />
+          )}
+
+          {activePage === 'copilot' && (
+            <AICopilot 
               activeDataset={activeDataset} 
               token={token} 
             />
@@ -145,6 +162,14 @@ export default function App() {
             <MLSandbox 
               activeDataset={activeDataset} 
               token={token} 
+            />
+          )}
+
+          {activePage === 'refiner' && (
+            <DataRefiner 
+              activeDataset={activeDataset} 
+              token={token} 
+              onDatasetModified={fetchDatasets}
             />
           )}
         </main>

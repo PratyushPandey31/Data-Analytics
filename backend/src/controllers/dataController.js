@@ -374,3 +374,148 @@ exports.loadSamples = async (req, res) => {
   }
 };
 
+exports.cleanDataset = async (req, res) => {
+  const { dataset_id, operation, column, strategy, custom_value, threshold } = req.body;
+  const userId = req.user.userId;
+
+  if (!dataset_id || !operation) {
+    return res.status(400).json({ error: 'dataset_id and operation are required' });
+  }
+
+  try {
+    // 1. Verify dataset ownership
+    const dataset = await getQuery('SELECT * FROM datasets WHERE id = ? AND user_id = ?', [dataset_id, userId]);
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+    }
+
+    const tableName = dataset.table_name;
+    let schemaMap = JSON.parse(dataset.schema_json);
+    let rowCount = dataset.row_count;
+    let colCount = dataset.col_count;
+
+    // Check if column exists in schema
+    let dbCol = '';
+    if (column && schemaMap[column]) {
+      dbCol = schemaMap[column].sanitized;
+    }
+
+    if (operation === 'drop_column') {
+      if (!column || !dbCol) {
+        return res.status(400).json({ error: 'Valid column name is required to drop' });
+      }
+
+      // Drop column in SQLite
+      await runQuery(`ALTER TABLE "${tableName}" DROP COLUMN "${dbCol}"`);
+
+      // Update schema metadata
+      delete schemaMap[column];
+      colCount = Object.keys(schemaMap).length;
+
+      await runQuery(
+        'UPDATE datasets SET schema_json = ?, col_count = ? WHERE id = ?',
+        [JSON.stringify(schemaMap), colCount, dataset_id]
+      );
+
+      return res.json({
+        message: `Column "${column}" successfully dropped`,
+        dataset: { id: dataset_id, col_count: colCount, schema: schemaMap }
+      });
+    }
+
+    if (operation === 'fill_nulls') {
+      if (!column || !dbCol) {
+        return res.status(400).json({ error: 'Column is required to fill null values' });
+      }
+
+      let fillVal = null;
+      const type = schemaMap[column].type;
+
+      if (strategy === 'mean' || strategy === 'median') {
+        const rows = await allQuery(`SELECT "${dbCol}" as val FROM "${tableName}" WHERE "${dbCol}" IS NOT NULL`);
+        const values = rows.map(r => parseFloat(r.val)).filter(v => !isNaN(v));
+
+        if (values.length === 0) {
+          return res.status(400).json({ error: 'No numerical records present to compute imputation stats' });
+        }
+
+        if (strategy === 'mean') {
+          const sum = values.reduce((a, b) => a + b, 0);
+          fillVal = sum / values.length;
+        } else {
+          const sorted = [...values].sort((a, b) => a - b);
+          const mid = Math.floor(sorted.length / 2);
+          fillVal = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+      } else if (strategy === 'custom') {
+        if (custom_value === undefined || custom_value === '') {
+          return res.status(400).json({ error: 'custom_value is required for custom strategy' });
+        }
+        fillVal = type === 'INTEGER' ? parseInt(custom_value, 10) : type === 'REAL' ? parseFloat(custom_value) : custom_value;
+      } else {
+        return res.status(400).json({ error: 'Invalid imputation strategy' });
+      }
+
+      // Execute UPDATE
+      await runQuery(`UPDATE "${tableName}" SET "${dbCol}" = ? WHERE "${dbCol}" IS NULL`, [fillVal]);
+
+      return res.json({
+        message: `Null values in column "${column}" filled with ${strategy} value (${fillVal})`,
+        fill_value: fillVal
+      });
+    }
+
+    if (operation === 'remove_outliers') {
+      if (!column || !dbCol) {
+        return res.status(400).json({ error: 'Column is required to scan outliers' });
+      }
+
+      const zThresh = parseFloat(threshold) || 2.0;
+
+      // Fetch column stats
+      const statsRows = await allQuery(`SELECT "${dbCol}" as val FROM "${tableName}" WHERE "${dbCol}" IS NOT NULL`);
+      const values = statsRows.map(r => parseFloat(r.val)).filter(v => !isNaN(v));
+
+      if (values.length === 0) {
+        return res.status(400).json({ error: 'No numerical values to calculate outliers' });
+      }
+
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+      const stdDev = Math.sqrt(variance);
+
+      if (stdDev === 0) {
+        return res.status(400).json({ error: 'Standard deviation is zero; cannot isolate outliers' });
+      }
+
+      // Run DELETE
+      const deleteResult = await runQuery(
+        `DELETE FROM "${tableName}" WHERE ABS(("${dbCol}" - ?) / ?) > ?`,
+        [mean, stdDev, zThresh]
+      );
+
+      // Re-count rows
+      const countRow = await getQuery(`SELECT COUNT(*) as cnt FROM "${tableName}"`);
+      rowCount = countRow.cnt;
+
+      await runQuery(
+        'UPDATE datasets SET row_count = ? WHERE id = ?',
+        [rowCount, dataset_id]
+      );
+
+      return res.json({
+        message: `Outlier rows successfully removed. Deleted ${deleteResult.changes} rows.`,
+        deleted_count: deleteResult.changes,
+        new_row_count: rowCount
+      });
+    }
+
+    res.status(400).json({ error: 'Unsupported cleaning operation' });
+
+  } catch (err) {
+    console.error('Clean dataset error:', err);
+    res.status(500).json({ error: `Imputation/refining failure: ${err.message}` });
+  }
+};
+
+
